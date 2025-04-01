@@ -1,0 +1,612 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 77;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		7E1F410C2D9ADCEE00F24F34 /* AWSClientRuntime in Frameworks */ = {isa = PBXBuildFile; productRef = 7E1F410B2D9ADCEE00F24F34 /* AWSClientRuntime */; };
+		7E1F410E2D9ADCEE00F24F34 /* AWSS3 in Frameworks */ = {isa = PBXBuildFile; productRef = 7E1F410D2D9ADCEE00F24F34 /* AWSS3 */; };
+		7E1F41132D9AE61000F24F34 /* AWSSDKIdentity in Frameworks */ = {isa = PBXBuildFile; productRef = 7E1F41122D9AE61000F24F34 /* AWSSDKIdentity */; };
+		7E1F41152D9AE86D00F24F34 /* AWSSTS in Frameworks */ = {isa = PBXBuildFile; productRef = 7E1F41142D9AE86D00F24F34 /* AWSSTS */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		7E1F40EE2D9ADB2000F24F34 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 7E1F40D42D9ADB1E00F24F34 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 7E1F40DB2D9ADB1E00F24F34;
+			remoteInfo = S3_MVP;
+		};
+		7E1F40F82D9ADB2000F24F34 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 7E1F40D42D9ADB1E00F24F34 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 7E1F40DB2D9ADB1E00F24F34;
+			remoteInfo = S3_MVP;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXFileReference section */
+		7E1F40DC2D9ADB1E00F24F34 /* S3_MVP.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = S3_MVP.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		7E1F40ED2D9ADB2000F24F34 /* S3_MVPTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = S3_MVPTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		7E1F40F72D9ADB2000F24F34 /* S3_MVPUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = S3_MVPUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+/* End PBXFileReference section */
+
+/* Begin PBXFileSystemSynchronizedRootGroup section */
+		7E1F40DE2D9ADB1E00F24F34 /* S3_MVP */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = S3_MVP;
+			sourceTree = "<group>";
+		};
+		7E1F40F02D9ADB2000F24F34 /* S3_MVPTests */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = S3_MVPTests;
+			sourceTree = "<group>";
+		};
+		7E1F40FA2D9ADB2000F24F34 /* S3_MVPUITests */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = S3_MVPUITests;
+			sourceTree = "<group>";
+		};
+/* End PBXFileSystemSynchronizedRootGroup section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		7E1F40D92D9ADB1E00F24F34 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				7E1F410E2D9ADCEE00F24F34 /* AWSS3 in Frameworks */,
+				7E1F41132D9AE61000F24F34 /* AWSSDKIdentity in Frameworks */,
+				7E1F410C2D9ADCEE00F24F34 /* AWSClientRuntime in Frameworks */,
+				7E1F41152D9AE86D00F24F34 /* AWSSTS in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		7E1F40EA2D9ADB2000F24F34 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		7E1F40F42D9ADB2000F24F34 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		7E1F40D32D9ADB1E00F24F34 = {
+			isa = PBXGroup;
+			children = (
+				7E1F40DE2D9ADB1E00F24F34 /* S3_MVP */,
+				7E1F40F02D9ADB2000F24F34 /* S3_MVPTests */,
+				7E1F40FA2D9ADB2000F24F34 /* S3_MVPUITests */,
+				7E1F410F2D9AE5A300F24F34 /* Frameworks */,
+				7E1F40DD2D9ADB1E00F24F34 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		7E1F40DD2D9ADB1E00F24F34 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				7E1F40DC2D9ADB1E00F24F34 /* S3_MVP.app */,
+				7E1F40ED2D9ADB2000F24F34 /* S3_MVPTests.xctest */,
+				7E1F40F72D9ADB2000F24F34 /* S3_MVPUITests.xctest */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		7E1F410F2D9AE5A300F24F34 /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		7E1F40DB2D9ADB1E00F24F34 /* S3_MVP */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 7E1F41012D9ADB2000F24F34 /* Build configuration list for PBXNativeTarget "S3_MVP" */;
+			buildPhases = (
+				7E1F40D82D9ADB1E00F24F34 /* Sources */,
+				7E1F40D92D9ADB1E00F24F34 /* Frameworks */,
+				7E1F40DA2D9ADB1E00F24F34 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				7E1F40DE2D9ADB1E00F24F34 /* S3_MVP */,
+			);
+			name = S3_MVP;
+			packageProductDependencies = (
+				7E1F410B2D9ADCEE00F24F34 /* AWSClientRuntime */,
+				7E1F410D2D9ADCEE00F24F34 /* AWSS3 */,
+				7E1F41122D9AE61000F24F34 /* AWSSDKIdentity */,
+				7E1F41142D9AE86D00F24F34 /* AWSSTS */,
+			);
+			productName = S3_MVP;
+			productReference = 7E1F40DC2D9ADB1E00F24F34 /* S3_MVP.app */;
+			productType = "com.apple.product-type.application";
+		};
+		7E1F40EC2D9ADB2000F24F34 /* S3_MVPTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 7E1F41042D9ADB2000F24F34 /* Build configuration list for PBXNativeTarget "S3_MVPTests" */;
+			buildPhases = (
+				7E1F40E92D9ADB2000F24F34 /* Sources */,
+				7E1F40EA2D9ADB2000F24F34 /* Frameworks */,
+				7E1F40EB2D9ADB2000F24F34 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				7E1F40EF2D9ADB2000F24F34 /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				7E1F40F02D9ADB2000F24F34 /* S3_MVPTests */,
+			);
+			name = S3_MVPTests;
+			packageProductDependencies = (
+			);
+			productName = S3_MVPTests;
+			productReference = 7E1F40ED2D9ADB2000F24F34 /* S3_MVPTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
+		7E1F40F62D9ADB2000F24F34 /* S3_MVPUITests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 7E1F41072D9ADB2000F24F34 /* Build configuration list for PBXNativeTarget "S3_MVPUITests" */;
+			buildPhases = (
+				7E1F40F32D9ADB2000F24F34 /* Sources */,
+				7E1F40F42D9ADB2000F24F34 /* Frameworks */,
+				7E1F40F52D9ADB2000F24F34 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				7E1F40F92D9ADB2000F24F34 /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				7E1F40FA2D9ADB2000F24F34 /* S3_MVPUITests */,
+			);
+			name = S3_MVPUITests;
+			packageProductDependencies = (
+			);
+			productName = S3_MVPUITests;
+			productReference = 7E1F40F72D9ADB2000F24F34 /* S3_MVPUITests.xctest */;
+			productType = "com.apple.product-type.bundle.ui-testing";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		7E1F40D42D9ADB1E00F24F34 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = 1;
+				LastSwiftUpdateCheck = 1620;
+				LastUpgradeCheck = 1620;
+				TargetAttributes = {
+					7E1F40DB2D9ADB1E00F24F34 = {
+						CreatedOnToolsVersion = 16.2;
+					};
+					7E1F40EC2D9ADB2000F24F34 = {
+						CreatedOnToolsVersion = 16.2;
+						TestTargetID = 7E1F40DB2D9ADB1E00F24F34;
+					};
+					7E1F40F62D9ADB2000F24F34 = {
+						CreatedOnToolsVersion = 16.2;
+						TestTargetID = 7E1F40DB2D9ADB1E00F24F34;
+					};
+				};
+			};
+			buildConfigurationList = 7E1F40D72D9ADB1E00F24F34 /* Build configuration list for PBXProject "S3_MVP" */;
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+			);
+			mainGroup = 7E1F40D32D9ADB1E00F24F34;
+			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				7E1F410A2D9ADCEE00F24F34 /* XCRemoteSwiftPackageReference "aws-sdk-swift" */,
+			);
+			preferredProjectObjectVersion = 77;
+			productRefGroup = 7E1F40DD2D9ADB1E00F24F34 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				7E1F40DB2D9ADB1E00F24F34 /* S3_MVP */,
+				7E1F40EC2D9ADB2000F24F34 /* S3_MVPTests */,
+				7E1F40F62D9ADB2000F24F34 /* S3_MVPUITests */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		7E1F40DA2D9ADB1E00F24F34 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		7E1F40EB2D9ADB2000F24F34 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		7E1F40F52D9ADB2000F24F34 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		7E1F40D82D9ADB1E00F24F34 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		7E1F40E92D9ADB2000F24F34 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		7E1F40F32D9ADB2000F24F34 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		7E1F40EF2D9ADB2000F24F34 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 7E1F40DB2D9ADB1E00F24F34 /* S3_MVP */;
+			targetProxy = 7E1F40EE2D9ADB2000F24F34 /* PBXContainerItemProxy */;
+		};
+		7E1F40F92D9ADB2000F24F34 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 7E1F40DB2D9ADB1E00F24F34 /* S3_MVP */;
+			targetProxy = 7E1F40F82D9ADB2000F24F34 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin XCBuildConfiguration section */
+		7E1F40FF2D9ADB2000F24F34 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MACOSX_DEPLOYMENT_TARGET = 15.2;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = macosx;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+			};
+			name = Debug;
+		};
+		7E1F41002D9ADB2000F24F34 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MACOSX_DEPLOYMENT_TARGET = 15.2;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				SDKROOT = macosx;
+				SWIFT_COMPILATION_MODE = wholemodule;
+			};
+			name = Release;
+		};
+		7E1F41022D9ADB2000F24F34 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = S3_MVP/S3_MVP.entitlements;
+				CODE_SIGN_IDENTITY = "Apple Development";
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_ASSET_PATHS = "\"S3_MVP/Preview Content\"";
+				DEVELOPMENT_TEAM = 26P8376KWP;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.jacky.s3mvp;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE_SPECIFIER = "";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+			};
+			name = Debug;
+		};
+		7E1F41032D9ADB2000F24F34 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = S3_MVP/S3_MVP.entitlements;
+				CODE_SIGN_IDENTITY = "Apple Development";
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_ASSET_PATHS = "\"S3_MVP/Preview Content\"";
+				DEVELOPMENT_TEAM = 26P8376KWP;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.jacky.s3mvp;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE_SPECIFIER = "";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+			};
+			name = Release;
+		};
+		7E1F41052D9ADB2000F24F34 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 15.2;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "jacky.S3-MVPTests";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/S3_MVP.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/S3_MVP";
+			};
+			name = Debug;
+		};
+		7E1F41062D9ADB2000F24F34 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 15.2;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "jacky.S3-MVPTests";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/S3_MVP.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/S3_MVP";
+			};
+			name = Release;
+		};
+		7E1F41082D9ADB2000F24F34 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "jacky.S3-MVPUITests";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TEST_TARGET_NAME = S3_MVP;
+			};
+			name = Debug;
+		};
+		7E1F41092D9ADB2000F24F34 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "jacky.S3-MVPUITests";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TEST_TARGET_NAME = S3_MVP;
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		7E1F40D72D9ADB1E00F24F34 /* Build configuration list for PBXProject "S3_MVP" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				7E1F40FF2D9ADB2000F24F34 /* Debug */,
+				7E1F41002D9ADB2000F24F34 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		7E1F41012D9ADB2000F24F34 /* Build configuration list for PBXNativeTarget "S3_MVP" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				7E1F41022D9ADB2000F24F34 /* Debug */,
+				7E1F41032D9ADB2000F24F34 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		7E1F41042D9ADB2000F24F34 /* Build configuration list for PBXNativeTarget "S3_MVPTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				7E1F41052D9ADB2000F24F34 /* Debug */,
+				7E1F41062D9ADB2000F24F34 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		7E1F41072D9ADB2000F24F34 /* Build configuration list for PBXNativeTarget "S3_MVPUITests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				7E1F41082D9ADB2000F24F34 /* Debug */,
+				7E1F41092D9ADB2000F24F34 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		7E1F410A2D9ADCEE00F24F34 /* XCRemoteSwiftPackageReference "aws-sdk-swift" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/awslabs/aws-sdk-swift.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 1.2.48;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		7E1F410B2D9ADCEE00F24F34 /* AWSClientRuntime */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 7E1F410A2D9ADCEE00F24F34 /* XCRemoteSwiftPackageReference "aws-sdk-swift" */;
+			productName = AWSClientRuntime;
+		};
+		7E1F410D2D9ADCEE00F24F34 /* AWSS3 */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 7E1F410A2D9ADCEE00F24F34 /* XCRemoteSwiftPackageReference "aws-sdk-swift" */;
+			productName = AWSS3;
+		};
+		7E1F41122D9AE61000F24F34 /* AWSSDKIdentity */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 7E1F410A2D9ADCEE00F24F34 /* XCRemoteSwiftPackageReference "aws-sdk-swift" */;
+			productName = AWSSDKIdentity;
+		};
+		7E1F41142D9AE86D00F24F34 /* AWSSTS */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 7E1F410A2D9ADCEE00F24F34 /* XCRemoteSwiftPackageReference "aws-sdk-swift" */;
+			productName = AWSSTS;
+		};
+/* End XCSwiftPackageProductDependency section */
+	};
+	rootObject = 7E1F40D42D9ADB1E00F24F34 /* Project object */;
+}
