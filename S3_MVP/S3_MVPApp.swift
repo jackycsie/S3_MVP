@@ -9,9 +9,14 @@ import SwiftUI
 
 @main
 struct S3_MVPApp: App {
+    @StateObject private var awsConfig = AWSConfiguration()
+    
     var body: some Scene {
         WindowGroup {
             ContentView()
+                .environmentObject(awsConfig)
         }
+        .windowStyle(.hiddenTitleBar)
+        .windowResizability(.contentSize)
     }
 }

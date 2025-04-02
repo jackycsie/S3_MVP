@@ -2,5 +2,13 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
+    <key>LSApplicationCategoryType</key>
+    <string>public.app-category.developer-tools</string>
+    <key>NSDocumentsFolderUsageDescription</key>
+    <string>需要訪問文件以上傳到 S3</string>
+    <key>NSDownloadsFolderUsageDescription</key>
+    <string>需要訪問下載文件夾以上傳文件到 S3</string>
+    <key>NSDesktopFolderUsageDescription</key>
+    <string>需要訪問桌面文件夾以上傳文件到 S3</string>
 </dict>
 </plist> 
