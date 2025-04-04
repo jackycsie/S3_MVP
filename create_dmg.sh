@@ -2,10 +2,10 @@
 
 # 設置變數
 APP_NAME="S3_MVP"
-VERSION="0.1.0"
+VERSION="0.2.0"
 DMG_NAME="${APP_NAME}_${VERSION}.dmg"
 VOLUME_NAME="${APP_NAME} ${VERSION}"
-SOURCE_APP="/Users/sphuang/Desktop/S3_MVP_2025-04-01_18-05-22/S3_MVP.app"  # 這裡需要替換為實際的 .app 路徑
+SOURCE_APP="/Users/sphuang/Desktop/S3_MVP_2025-04-02_16-23-05/S3_MVP.app"  # 更新為當前的 .app 路徑
 DMG_PATH="./build/${DMG_NAME}"
 TMP_DMG_PATH="./build/${APP_NAME}_tmp.dmg"
 BACKGROUND_FILE="./build/background.png"  # 如果你想添加背景圖片

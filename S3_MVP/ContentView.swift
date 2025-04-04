@@ -13,12 +13,40 @@ extension URLRequest {
     }
 }
 
+struct S3Bucket: Identifiable, Hashable {
+    let id = UUID()
+    let name: String?
+    
+    init(name: String?) {
+        self.name = name
+    }
+    
+    static func == (lhs: S3Bucket, rhs: S3Bucket) -> Bool {
+        lhs.id == rhs.id
+    }
+    
+    func hash(into hasher: inout Hasher) {
+        hasher.combine(id)
+    }
+}
+
 struct S3Item: Identifiable, Hashable {
     let id = UUID()
     let key: String
     let size: Int64?
     let lastModified: Date?
     let isFolder: Bool
+    let storageClass: String?
+    let contentType: String?
+    
+    init(key: String, size: Int64?, lastModified: Date?, isFolder: Bool, storageClass: String?, contentType: String?) {
+        self.key = key
+        self.size = size
+        self.lastModified = lastModified
+        self.isFolder = isFolder
+        self.storageClass = storageClass
+        self.contentType = contentType
+    }
     
     static func == (lhs: S3Item, rhs: S3Item) -> Bool {
         lhs.id == rhs.id
@@ -26,6 +54,36 @@ struct S3Item: Identifiable, Hashable {
     
     func hash(into hasher: inout Hasher) {
         hasher.combine(id)
+    }
+    
+    // 格式化文件大小
+    var formattedSize: String {
+        guard let size = size else { return "-" }
+        return ByteCountFormatter.string(fromByteCount: size, countStyle: .file)
+    }
+    
+    // 格式化最後修改時間
+    var formattedLastModified: String {
+        guard let date = lastModified else { return "-" }
+        let formatter = DateFormatter()
+        formatter.dateStyle = .medium
+        formatter.timeStyle = .short
+        return formatter.string(from: date)
+    }
+    
+    // 獲取簡化的文件類型
+    var simpleContentType: String {
+        guard let contentType = contentType else { return "-" }
+        if let subtype = contentType.split(separator: "/").last {
+            return String(subtype).uppercased()
+        }
+        return contentType
+    }
+    
+    // 獲取簡化的存儲類型
+    var simpleStorageClass: String {
+        guard let storageClass = storageClass else { return "-" }
+        return storageClass.replacingOccurrences(of: "STANDARD", with: "STD")
     }
 }
 
@@ -43,13 +101,80 @@ struct ContentView: View {
                 region: $region,
                 isLoggedIn: $isLoggedIn
             )
+            .frame(minWidth: 1200, minHeight: 800)
         } else {
-            LoginView(
-                isLoggedIn: $isLoggedIn,
-                accessKey: $accessKey,
-                secretKey: $secretKey,
-                region: $region
+            VStack(spacing: 20) {
+                Text("S3_MVP")
+                    .font(.title)
+                    .padding(.top, 20)
+                
+                VStack(alignment: .leading, spacing: 8) {
+                    Text("Access Key")
+                    SecureField("", text: $accessKey)
+                        .textFieldStyle(RoundedBorderTextFieldStyle())
+                }
+                
+                VStack(alignment: .leading, spacing: 8) {
+                    Text("Secret Key")
+                    SecureField("", text: $secretKey)
+                        .textFieldStyle(RoundedBorderTextFieldStyle())
+                }
+                
+                VStack(alignment: .leading, spacing: 8) {
+                    Text("Region")
+                    Picker("選擇區域", selection: $region) {
+                        Text("美國東部 (us-east-1)").tag("us-east-1")
+                        Text("東京 (ap-northeast-1)").tag("ap-northeast-1")
+                        Text("新加坡 (ap-southeast-1)").tag("ap-southeast-1")
+                        Text("美國西部 (us-west-2)").tag("us-west-2")
+                    }
+                    .pickerStyle(MenuPickerStyle())
+                }
+                
+                Button("連接") {
+                    Task {
+                        await connect()
+                    }
+                }
+                .buttonStyle(.borderedProminent)
+                .padding(.top, 10)
+                
+                Spacer()
+            }
+            .padding()
+            .frame(width: 300)
+        }
+    }
+    
+    private func connect() async {
+        // 創建憑證身份
+        let credentials = AWSCredentialIdentity(
+            accessKey: accessKey,
+            secret: secretKey
+        )
+        
+        do {
+            // 創建靜態憑證解析器
+            let identityResolver = try StaticAWSCredentialIdentityResolver(credentials)
+            
+            // 設置 S3 配置
+            let s3Configuration = try await S3Client.S3ClientConfiguration(
+                awsCredentialIdentityResolver: identityResolver,
+                region: region
             )
+            
+            // 創建 S3 客戶端
+            let client = S3Client(config: s3Configuration)
+            
+            // 嘗試列出儲存桶以驗證憑證
+            _ = try await client.listBuckets(input: ListBucketsInput())
+            
+            // 如果成功，設置登入狀態
+            DispatchQueue.main.async {
+                isLoggedIn = true
+            }
+        } catch {
+            print("連接失敗：\(error)")
         }
     }
 }
@@ -234,10 +359,11 @@ struct MainView: View {
                     if navigationStack.count > 1 {
                         navigationStack.removeLast()
                         let previous = navigationStack.last!
+                        currentPrefix = previous.prefix
+                        updatePath(newPrefix: previous.prefix)
                         Task {
                             await listObjects(bucket: previous.bucket, prefix: previous.prefix)
                         }
-                        currentPath = previous.prefix
                     }
                 }) {
                     Image(systemName: "arrow.left")
@@ -247,8 +373,35 @@ struct MainView: View {
                 
                 Spacer()
                 
-                Text("當前路徑：/\(currentPath)")
-                    .foregroundColor(.gray)
+                // 路徑導航
+                HStack(spacing: 4) {
+                    Text("/")
+                        .foregroundColor(.gray)
+                    
+                    // Root 目錄
+                    Button(action: {
+                        navigateToPath(index: 0)
+                    }) {
+                        Text(currentBucket ?? "")
+                            .foregroundColor(.blue)
+                    }
+                    .buttonStyle(.plain)
+                    
+                    if !currentPath.isEmpty {
+                        let components = currentPath.split(separator: "/")
+                        ForEach(Array(components.enumerated()), id: \.offset) { index, component in
+                            Text("/")
+                                .foregroundColor(.gray)
+                            Button(action: {
+                                navigateToPath(index: index + 1)
+                            }) {
+                                Text(String(component))
+                                    .foregroundColor(.blue)
+                            }
+                            .buttonStyle(.plain)
+                        }
+                    }
+                }
                 
                 Spacer()
                 
@@ -357,51 +510,45 @@ struct MainView: View {
                     } else {
                         // 對象列表
                         List {
+                            // 表頭
+                            HStack(spacing: 0) {
+                                Text("名稱")
+                                    .frame(width: 300, alignment: .leading)
+                                Text("大小")
+                                    .frame(width: 100, alignment: .trailing)
+                                Text("類型")
+                                    .frame(width: 100, alignment: .center)
+                                Text("存儲類型")
+                                    .frame(width: 100, alignment: .center)
+                                Text("最後修改時間")
+                                    .frame(width: 180, alignment: .center)
+                                Spacer()
+                            }
+                            .foregroundColor(.gray)
+                            .font(.caption)
+                            .padding(.vertical, 4)
+                            .padding(.horizontal)
+                            
                             ForEach(objects) { item in
-                                HStack {
-                                    Image(systemName: item.isFolder ? "folder" : "doc")
-                                        .foregroundColor(item.isFolder ? .blue : .gray)
-                                    
-                                    VStack(alignment: .leading) {
-                                        Text(item.key.replacingOccurrences(of: currentPrefix, with: ""))
-                                        if !item.isFolder, let size = item.size {
-                                            Text(ByteCountFormatter.string(fromByteCount: size, countStyle: .file))
-                                                .font(.caption)
-                                                .foregroundColor(.secondary)
-                                        }
-                                    }
-                                    
-                                    Spacer()
-                                    
-                                    if !item.isFolder {
-                                        Toggle(isOn: Binding(
-                                            get: { selectedObjects.contains(item.key) },
-                                            set: { isSelected in
-                                                if isSelected {
-                                                    selectedObjects.insert(item.key)
-                                                } else {
-                                                    selectedObjects.remove(item.key)
-                                                }
-                                            }
-                                        )) {
-                                            EmptyView()
-                                        }
-                                        .toggleStyle(CheckboxToggleStyle())
-                                    }
-                                }
-                                .contentShape(Rectangle())
-                                .onTapGesture {
-                                    if item.isFolder {
-                                        currentPrefix = item.key
+                                ObjectRowView(
+                                    item: item,
+                                    currentPrefix: currentPrefix,
+                                    currentBucket: currentBucket,
+                                    selectedObjects: $selectedObjects,
+                                    onFolderTap: { key in
+                                        currentPrefix = key
+                                        updatePath(newPrefix: key)
                                         if let bucket = currentBucket {
+                                            navigationStack.append((bucket: bucket, prefix: key))
                                             Task {
-                                                await listObjects(bucket: bucket, prefix: item.key)
+                                                await listObjects(bucket: bucket, prefix: key)
                                             }
                                         }
                                     }
-                                }
+                                )
                             }
                         }
+                        .listStyle(PlainListStyle())
                     }
                 }
             }
@@ -426,6 +573,23 @@ struct MainView: View {
                 }
             }
             return true
+        }
+    }
+    
+    private func navigateToPath(index: Int) {
+        guard index >= 0, index < navigationStack.count else { return }
+        
+        // 保留到指定索引的導航記錄
+        navigationStack = Array(navigationStack.prefix(through: index))
+        let target = navigationStack.last!
+        
+        // 更新當前狀態
+        currentPrefix = target.prefix
+        updatePath(newPrefix: target.prefix)
+        
+        // 加載目標目錄的內容
+        Task {
+            await listObjects(bucket: target.bucket, prefix: target.prefix)
         }
     }
     
@@ -485,24 +649,46 @@ struct MainView: View {
             let response = try await client.listObjectsV2(input: input)
             
             DispatchQueue.main.async {
-                // 處理文件夾
-                let folders = (response.commonPrefixes ?? []).map { prefix in
-                    S3Item(
-                        key: prefix.prefix ?? "",
-                        size: nil,
-                        lastModified: nil,
-                        isFolder: true
-                    )
+                // 安全地提取 commonPrefixes
+                let commonPrefixes = response.commonPrefixes ?? []
+                
+                // 初始化一個空數組來存儲文件夾
+                var folders: [S3Item] = []
+                
+                // 遍歷 commonPrefixes 並創建 S3Item 實例
+                for prefix in commonPrefixes {
+                    if let key = prefix.prefix {
+                        let folder = S3Item(
+                            key: key,
+                            size: nil,
+                            lastModified: nil,
+                            isFolder: true,
+                            storageClass: nil,
+                            contentType: nil
+                        )
+                        folders.append(folder)
+                    }
                 }
                 
-                // 處理文件
-                let files = (response.contents ?? []).filter { $0.key != prefix }.map { object in
-                    S3Item(
-                        key: object.key ?? "",
-                        size: object.size != nil ? Int64(object.size!) : nil,
-                        lastModified: object.lastModified,
-                        isFolder: false
-                    )
+                // 安全地提取 contents
+                let contents = response.contents ?? []
+                
+                // 初始化一個空數組來存儲文件
+                var files: [S3Item] = []
+                
+                // 遍歷 contents 並創建 S3Item 實例
+                for object in contents {
+                    if object.key != prefix {
+                        let file = S3Item(
+                            key: object.key ?? "",
+                            size: object.size != nil ? Int64(object.size!) : nil,
+                            lastModified: object.lastModified,
+                            isFolder: false,
+                            storageClass: object.storageClass?.rawValue,
+                            contentType: nil  // 暫時設置為 nil，因為 S3ClientTypes.Object 沒有 contentType 屬性
+                        )
+                        files.append(file)
+                    }
                 }
                 
                 // 合併結果，文件夾在前
@@ -950,6 +1136,19 @@ struct MainView: View {
             await listObjects(bucket: name, prefix: "")
         }
     }
+
+    private func updatePath(newPrefix: String) {
+        // 移除開頭和結尾的斜線
+        let cleanPrefix = newPrefix.trimmingCharacters(in: CharacterSet(charactersIn: "/"))
+        
+        if cleanPrefix.isEmpty {
+            currentPath = ""
+        } else {
+            // 將路徑分割成組件
+            let components = cleanPrefix.split(separator: "/")
+            currentPath = components.joined(separator: "/")
+        }
+    }
 }
 
 // 創建存儲桶的視圖
@@ -1033,8 +1232,7 @@ struct CreateBucketView: View {
                     .keyboardShortcut(.return, modifiers: [])
                     .disabled(bucketName.isEmpty || isCreating)
                     .buttonStyle(.borderedProminent)
-        }
-        .padding()
+                }
             }
             .navigationTitle("新增存儲桶")
             .frame(minWidth: 600, minHeight: 500)
@@ -1054,6 +1252,78 @@ struct NoticeRow: View {
                 .foregroundColor(.blue)
             Text(text)
                 .font(.body)
+        }
+    }
+}
+
+// 新增 ObjectRowView 結構體
+struct ObjectRowView: View {
+    let item: S3Item
+    let currentPrefix: String
+    let currentBucket: String?
+    @Binding var selectedObjects: Set<String>
+    let onFolderTap: (String) -> Void
+    
+    var body: some View {
+        HStack(spacing: 0) {
+            // 名稱和圖標
+            HStack {
+                Image(systemName: item.isFolder ? "folder" : "doc")
+                    .foregroundColor(item.isFolder ? .blue : .gray)
+                Text(item.key.replacingOccurrences(of: currentPrefix, with: ""))
+                    .lineLimit(1)
+                    .truncationMode(.middle)
+            }
+            .frame(width: 300, alignment: .leading)
+            
+            // 大小
+            Text(item.isFolder ? "-" : item.formattedSize)
+                .frame(width: 100, alignment: .trailing)
+                .foregroundColor(.secondary)
+                .lineLimit(1)
+            
+            // 類型
+            Text(item.isFolder ? "DIR" : item.simpleContentType)
+                .frame(width: 100, alignment: .center)
+                .foregroundColor(.secondary)
+                .lineLimit(1)
+            
+            // 存儲類型
+            Text(item.isFolder ? "-" : item.simpleStorageClass)
+                .frame(width: 100, alignment: .center)
+                .foregroundColor(.secondary)
+                .lineLimit(1)
+            
+            // 最後修改時間
+            Text(item.formattedLastModified)
+                .frame(width: 180, alignment: .center)
+                .foregroundColor(.secondary)
+                .lineLimit(1)
+            
+            Spacer()
+            
+            if !item.isFolder {
+                Toggle(isOn: Binding(
+                    get: { selectedObjects.contains(item.key) },
+                    set: { isSelected in
+                        if isSelected {
+                            selectedObjects.insert(item.key)
+                        } else {
+                            selectedObjects.remove(item.key)
+                        }
+                    }
+                )) {
+                    EmptyView()
+                }
+                .toggleStyle(CheckboxToggleStyle())
+                .padding(.horizontal)
+            }
+        }
+        .contentShape(Rectangle())
+        .onTapGesture {
+            if item.isFolder {
+                onFolderTap(item.key)
+            }
         }
     }
 }

@@ -16,7 +16,7 @@ struct S3_MVPApp: App {
             ContentView()
                 .environmentObject(awsConfig)
         }
-        .windowStyle(.hiddenTitleBar)
+        .windowStyle(.titleBar)
         .windowResizability(.contentSize)
     }
 }
