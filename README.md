@@ -1,105 +1,79 @@
-# S3_MVP - AWS S3 Desktop Client
+# S3_MVP - AWS S3 Client for macOS
 
-A native macOS application for managing AWS S3 buckets and objects, built with SwiftUI and AWS SDK for Swift.
+A native macOS application built with SwiftUI for managing AWS S3 buckets and objects.
 
 ## Features
 
-- **Authentication**
-  - AWS credentials (Access Key and Secret Key) support
-  - Region selection
-  - Automatic region detection for buckets
-
-- **Bucket Management**
-  - List all accessible buckets
-  - Create new buckets
-  - Delete empty buckets
-  - Cross-region bucket support
-
-- **Object Management**
-  - Browse objects and folders
-  - Upload files (drag & drop supported)
-  - Delete objects (single or multiple)
-  - Navigate through folder hierarchies
-  - Breadcrumb navigation
-  - File properties display (size, type, storage class, last modified)
-
-- **User Interface**
-  - Clean and intuitive macOS native interface
-  - Resizable window layout
-  - Progress indicators for operations
-  - Detailed error messages
-  - Multi-column object list with sorting
+- 🔐 Secure AWS credentials management
+- 📂 Bucket management (create, delete, list)
+- 📁 Folder operations (create folders)
+- 📄 File operations (upload, delete)
+- 🌐 Multi-region support
+- 📱 Native macOS UI with SwiftUI
+- 🔄 Real-time updates
+- ✨ Drag and drop file upload
 
 ## Requirements
 
 - macOS 11.0 or later
 - Xcode 13.0 or later
-- AWS Account with appropriate IAM permissions:
-  - `s3:ListBuckets`
-  - `s3:CreateBucket`
-  - `s3:DeleteBucket`
-  - `s3:ListObjects`
-  - `s3:PutObject`
-  - `s3:DeleteObject`
-  - `s3:GetBucketLocation`
+- AWS Account with S3 access
+
+## Dependencies
+
+- SwiftUI
+- AWSClientRuntime
+- AWSS3
+- AWSSDKIdentity
+- AWSSTS
+- ClientRuntime
 
 ## Installation
 
-1. Clone the repository:
-   ```bash
-   git clone https://github.com/yourusername/S3_MVP.git
-   ```
-
-2. Open the project in Xcode:
-   ```bash
-   cd S3_MVP
-   open S3_MVP.xcodeproj
-   ```
-
-3. Build and run the project in Xcode
+1. Clone the repository
+2. Open the project in Xcode
+3. Build and run the application
 
 ## Usage
 
 1. Launch the application
 2. Enter your AWS credentials:
-   - Access Key ID
-   - Secret Access Key
-   - Select your preferred region
-3. Click "Connect" to access your S3 resources
-4. Navigate through buckets and objects using the sidebar and main view
-5. Use the toolbar buttons for various operations:
-   - Upload files
-   - Delete objects
-   - Create new buckets
+   - Access Key
+   - Secret Key
+   - Select Region
+3. Click "Connect" to access your S3 buckets
+
+### Bucket Operations
+- Create new buckets
+- Delete existing buckets
+- View bucket contents
+
+### File Operations
+- Create folders (supports double-slash format)
+- Upload files via drag & drop or file picker
+- Delete files and folders
+- Navigate through folder hierarchy
+
+## Recent Updates
+
+### Version 1.1.0
+- Added folder creation with double-slash format
+- Improved folder navigation
+- Enhanced error handling and user feedback
+- Updated UI elements for better user experience
 
 ## Security
 
-- Credentials are not stored permanently
-- All communications with AWS are secured using HTTPS
-- The application uses AWS SDK's built-in security features
-
-## Known Limitations
-
-- Maximum file upload size is limited by available memory
-- Folder upload is not supported
-- No file download feature yet
-- No bucket policy management
-- No versioning support
+This application handles AWS credentials locally and securely. No credentials are stored or transmitted outside of the application.
 
 ## Contributing
 
-Contributions are welcome! Please feel free to submit a Pull Request.
+Feel free to submit issues and enhancement requests.
 
 ## License
 
-This project is licensed under the MIT License - see the LICENSE file for details.
+[MIT License](LICENSE)
 
-## Acknowledgments
+## Disclaimer
 
-- Built with [AWS SDK for Swift](https://aws.amazon.com/sdk-for-swift/)
-- Uses SwiftUI for the user interface
-- Inspired by various S3 management tools
-
-## Contact
-
-If you have any questions or suggestions, please open an issue on GitHub. 
+This is a minimal viable product (MVP) and should be used with caution in production environments. 

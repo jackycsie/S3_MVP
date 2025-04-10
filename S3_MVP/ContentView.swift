@@ -179,6 +179,7 @@ struct ContentView: View {
     }
 }
 
+@MainActor
 struct MainView: View {
     @Binding var accessKey: String
     @Binding var secretKey: String
@@ -209,6 +210,11 @@ struct MainView: View {
     @State private var isUploading = false
     @State private var uploadProgress: Double = 0
     @State private var uploadError: String?
+    @State private var isShowingCreateDialog = false
+    @State private var newItemName = ""
+    @State private var isCreatingItem = false
+    @State private var createItemError: String?
+    @State private var selectedItemType = "folder" // "folder" 或 "file"
     
     var body: some View {
         NavigationView {
@@ -405,10 +411,21 @@ struct MainView: View {
                 
                 Spacer()
                 
-                Button("刷新") {
-                    Task {
-                        if let current = navigationStack.last {
-                            await listObjects(bucket: current.bucket, prefix: current.prefix)
+                // 工具欄按鈕
+                HStack(spacing: 12) {
+                    Button(action: {
+                        isShowingCreateDialog = true
+                    }) {
+                        Image(systemName: "plus")
+                        Text("新增資料夾")
+                    }
+                    .disabled(currentBucket == nil)
+                    
+                    Button("刷新") {
+                        Task {
+                            if let current = navigationStack.last {
+                                await listObjects(bucket: current.bucket, prefix: current.prefix)
+                            }
                         }
                     }
                 }
@@ -554,25 +571,55 @@ struct MainView: View {
             }
         }
         .onDrop(of: [.fileURL], isTargeted: nil) { providers in
-            Task {
-                for provider in providers {
-                    if provider.hasItemConformingToTypeIdentifier("public.file-url") {
-                        do {
-                            let data = try await provider.loadItem(forTypeIdentifier: "public.file-url", options: nil)
-                            if let urlData = data as? Data,
-                               let url = URL(dataRepresentation: urlData, relativeTo: nil) {
-                                await uploadFile(from: url)
-                            }
-                        } catch {
-                            print("拖放上傳錯誤：\(error.localizedDescription)")
-                            DispatchQueue.main.async {
-                                self.uploadError = "拖放上傳失敗：\(error.localizedDescription)"
-                            }
+            let _ = providers.first?.loadObject(ofClass: URL.self) { url, error in
+                guard let url = url, error == nil else {
+                    print("拖放上傳錯誤：\(error?.localizedDescription ?? "未知錯誤")")
+                    DispatchQueue.main.async {
+                        self.uploadError = "拖放上傳失敗：\(error?.localizedDescription ?? "未知錯誤")"
+                    }
+                    return
+                }
+                
+                Task { @MainActor in
+                    await self.uploadFile(from: url)
+                }
+            }
+            
+            return true
+        }
+        .alert("新增項目", isPresented: $isShowingCreateDialog) {
+            VStack {
+                Picker("類型", selection: $selectedItemType) {
+                    Text("文件夾").tag("folder")
+                    Text("文件").tag("file")
+                }
+                .pickerStyle(SegmentedPickerStyle())
+                .padding(.bottom, 8)
+                
+                TextField(selectedItemType == "folder" ? "文件夾名稱" : "文件名稱", text: $newItemName)
+                
+                Button("取消", role: .cancel) {
+                    newItemName = ""
+                    createItemError = nil
+                }
+                
+                Button(isCreatingItem ? "創建中..." : "創建") {
+                    Task {
+                        if selectedItemType == "folder" {
+                            await createFolder()
+                        } else {
+                            await createEmptyFile()
                         }
                     }
                 }
+                .disabled(isCreatingItem)
             }
-            return true
+        } message: {
+            if let error = createItemError {
+                Text(error)
+            } else {
+                Text(selectedItemType == "folder" ? "請輸入新文件夾的名稱" : "請輸入新文件的名稱")
+            }
         }
     }
     
@@ -622,10 +669,8 @@ struct MainView: View {
             do {
                 let locationResponse = try await client.getBucketLocation(input: locationInput)
                 if let bucketRegion = locationResponse.locationConstraint?.rawValue {
-                    // 如果返回空字符串，表示是 us-east-1
                     currentRegion = bucketRegion.isEmpty ? "us-east-1" : bucketRegion
                     
-                    // 如果區域不同，創建新的客戶端
                     if currentRegion != region {
                         let newConfig = try await S3Client.S3ClientConfiguration(
                             awsCredentialIdentityResolver: identityResolver,
@@ -635,7 +680,6 @@ struct MainView: View {
                     }
                 }
             } catch {
-                // 如果獲取位置失敗，記錄錯誤但繼續嘗試列出對象
                 print("獲取存儲桶位置時出錯：\(error.localizedDescription)")
             }
             
@@ -648,86 +692,96 @@ struct MainView: View {
             
             let response = try await client.listObjectsV2(input: input)
             
-            DispatchQueue.main.async {
-                // 安全地提取 commonPrefixes
-                let commonPrefixes = response.commonPrefixes ?? []
-                
-                // 初始化一個空數組來存儲文件夾
-                var folders: [S3Item] = []
-                
-                // 遍歷 commonPrefixes 並創建 S3Item 實例
-                for prefix in commonPrefixes {
-                    if let key = prefix.prefix {
+            // 安全地提取 commonPrefixes
+            let commonPrefixes = response.commonPrefixes ?? []
+            
+            // 初始化一個空數組來存儲文件夾
+            var folders: [S3Item] = []
+            
+            // 遍歷 commonPrefixes 並創建 S3Item 實例
+            for prefix in commonPrefixes {
+                if let key = prefix.prefix {
+                    let folder = S3Item(
+                        key: key,
+                        size: nil,
+                        lastModified: nil,
+                        isFolder: true,
+                        storageClass: nil,
+                        contentType: "application/x-directory"
+                    )
+                    folders.append(folder)
+                }
+            }
+            
+            // 安全地提取 contents
+            let contents = response.contents ?? []
+            
+            // 初始化一個空數組來存儲文件
+            var files: [S3Item] = []
+            
+            // 遍歷 contents 並創建 S3Item 實例
+            for object in contents {
+                if let key = object.key, key != prefix {
+                    // 檢查是否是文件夾（以斜線結尾）
+                    let isFolder = key.hasSuffix("/")
+                    
+                    if isFolder {
                         let folder = S3Item(
                             key: key,
                             size: nil,
-                            lastModified: nil,
+                            lastModified: object.lastModified,
                             isFolder: true,
-                            storageClass: nil,
-                            contentType: nil
+                            storageClass: object.storageClass?.rawValue,
+                            contentType: "application/x-directory"
                         )
                         folders.append(folder)
-                    }
-                }
-                
-                // 安全地提取 contents
-                let contents = response.contents ?? []
-                
-                // 初始化一個空數組來存儲文件
-                var files: [S3Item] = []
-                
-                // 遍歷 contents 並創建 S3Item 實例
-                for object in contents {
-                    if object.key != prefix {
+                    } else {
                         let file = S3Item(
-                            key: object.key ?? "",
+                            key: key,
                             size: object.size != nil ? Int64(object.size!) : nil,
                             lastModified: object.lastModified,
                             isFolder: false,
                             storageClass: object.storageClass?.rawValue,
-                            contentType: nil  // 暫時設置為 nil，因為 S3ClientTypes.Object 沒有 contentType 屬性
+                            contentType: nil
                         )
                         files.append(file)
                     }
                 }
-                
-                // 合併結果，文件夾在前
-                self.objects = folders + files
-                self.isLoadingObjects = false
             }
+            
+            // 合併結果，文件夾在前
+            self.objects = folders + files
+            self.isLoadingObjects = false
+            
         } catch let error as AWSServiceError {
-            DispatchQueue.main.async {
-                self.objectsError = """
-                無法獲取對象列表：
-                \(error.message ?? "未知錯誤")
-                
-                請檢查：
-                1. 存儲桶區域設置（當前：\(region)）
-                2. 是否有足夠的訪問權限
-                3. 存儲桶是否存在
-                4. 網絡連接是否正常
-                
-                如果確定權限正確但仍然無法訪問，
-                可能是因為存儲桶在其他區域，
-                請嘗試在控制面板中切換到正確的區域後重試。
-                """
-                self.isLoadingObjects = false
-            }
+            self.objectsError = """
+            無法獲取對象列表：
+            \(error.message ?? "未知錯誤")
+            
+            請檢查：
+            1. 存儲桶區域設置（當前：\(region)）
+            2. 是否有足夠的訪問權限
+            3. 存儲桶是否存在
+            4. 網絡連接是否正常
+            
+            如果確定權限正確但仍然無法訪問，
+            可能是因為存儲桶在其他區域，
+            請嘗試在控制面板中切換到正確的區域後重試。
+            """
+            self.isLoadingObjects = false
         } catch {
-            DispatchQueue.main.async {
-                self.objectsError = """
-                訪問存儲桶失敗：
-                \(error.localizedDescription)
-                
-                可能原因：
-                1. 網絡連接問題
-                2. 存儲桶區域不匹配
-                3. 權限不足
-                
-                當前區域：\(region)
-                """
-                self.isLoadingObjects = false
-            }
+            self.objectsError = """
+            訪問存儲桶失敗：
+            \(error.localizedDescription)
+            
+            可能原因：
+            1. 網絡連接問題
+            2. 存儲桶區域不匹配
+            3. 權限不足
+            
+            當前區域：\(region)
+            """
+            self.isLoadingObjects = false
         }
     }
     
@@ -819,6 +873,7 @@ struct MainView: View {
             let input = PutObjectInput(
                 body: .data(fileData),
                 bucket: bucket,
+                contentType: "text/plain",
                 key: key
             )
             
@@ -1147,6 +1202,211 @@ struct MainView: View {
             // 將路徑分割成組件
             let components = cleanPrefix.split(separator: "/")
             currentPath = components.joined(separator: "/")
+        }
+    }
+    
+    private func createFolder() async {
+        guard let bucket = currentBucket, !newItemName.isEmpty else { return }
+        
+        isCreatingItem = true
+        createItemError = nil
+        
+        do {
+            let credentials = AWSCredentialIdentity(
+                accessKey: accessKey,
+                secret: secretKey
+            )
+            
+            let identityResolver = try StaticAWSCredentialIdentityResolver(credentials)
+            
+            // 首先獲取存儲桶的實際區域
+            var currentRegion = region
+            var client: S3Client
+            
+            // 創建初始客戶端
+            let initialConfig = try await S3Client.S3ClientConfiguration(
+                awsCredentialIdentityResolver: identityResolver,
+                region: currentRegion
+            )
+            client = S3Client(config: initialConfig)
+            
+            // 嘗試獲取存儲桶的實際區域
+            let locationInput = GetBucketLocationInput(bucket: bucket)
+            do {
+                let locationResponse = try await client.getBucketLocation(input: locationInput)
+                if let bucketRegion = locationResponse.locationConstraint?.rawValue {
+                    currentRegion = bucketRegion.isEmpty ? "us-east-1" : bucketRegion
+                    
+                    if currentRegion != region {
+                        let newConfig = try await S3Client.S3ClientConfiguration(
+                            awsCredentialIdentityResolver: identityResolver,
+                            region: currentRegion
+                        )
+                        client = S3Client(config: newConfig)
+                    }
+                }
+            } catch {
+                print("獲取存儲桶位置時出錯：\(error.localizedDescription)")
+            }
+            
+            // 移除所有斜線，然後在結尾添加兩條斜線
+            let folderName = newItemName.trimmingCharacters(in: CharacterSet(charactersIn: "/"))
+            let folderPath = currentPrefix + folderName + "//"
+            
+            print("正在創建文件夾：\(folderPath)")
+            
+            // 使用空的 Data() 創建一個空對象
+            let input = PutObjectInput(
+                body: .data(Data()),
+                bucket: bucket,
+                key: folderPath
+            )
+            
+            _ = try await client.putObject(input: input)
+            print("文件夾創建成功")
+            
+            // 刷新列表
+            await listObjects(bucket: bucket, prefix: currentPrefix)
+            
+            self.newItemName = ""
+            self.isCreatingItem = false
+            self.createItemError = nil
+            self.isShowingCreateDialog = false
+            
+        } catch let error as AWSServiceError {
+            let errorMessage = """
+            創建文件夾失敗（AWS 服務錯誤）：
+            錯誤信息：\(error.message ?? "未知錯誤")
+            錯誤類型：\(type(of: error))
+            當前區域：\(region)
+            當前路徑：\(currentPrefix)
+            文件夾名稱：\(newItemName)
+            """
+            print(errorMessage)
+            self.createItemError = errorMessage
+            self.isCreatingItem = false
+        } catch {
+            let errorMessage = """
+            創建文件夾失敗（一般錯誤）：
+            錯誤信息：\(error.localizedDescription)
+            錯誤類型：\(type(of: error))
+            當前區域：\(region)
+            當前路徑：\(currentPrefix)
+            文件夾名稱：\(newItemName)
+            """
+            print(errorMessage)
+            self.createItemError = errorMessage
+            self.isCreatingItem = false
+        }
+    }
+    
+    private func createEmptyFile() async {
+        guard let bucket = currentBucket, !newItemName.isEmpty else { return }
+        
+        DispatchQueue.main.async {
+            self.isCreatingItem = true
+            self.createItemError = nil
+        }
+        
+        do {
+            // 創建憑證
+            let credentials = AWSCredentialIdentity(
+                accessKey: accessKey,
+                secret: secretKey
+            )
+            
+            let identityResolver = try StaticAWSCredentialIdentityResolver(credentials)
+            
+            // 首先獲取存儲桶的實際區域
+            var currentRegion = region
+            var client: S3Client
+            
+            // 創建初始客戶端
+            let initialConfig = try await S3Client.S3ClientConfiguration(
+                awsCredentialIdentityResolver: identityResolver,
+                region: currentRegion
+            )
+            client = S3Client(config: initialConfig)
+            
+            // 嘗試獲取存儲桶的實際區域
+            let locationInput = GetBucketLocationInput(bucket: bucket)
+            do {
+                let locationResponse = try await client.getBucketLocation(input: locationInput)
+                if let bucketRegion = locationResponse.locationConstraint?.rawValue {
+                    // 如果返回空字符串，表示是 us-east-1
+                    currentRegion = bucketRegion.isEmpty ? "us-east-1" : bucketRegion
+                    
+                    // 如果區域不同，創建新的客戶端
+                    if currentRegion != region {
+                        let newConfig = try await S3Client.S3ClientConfiguration(
+                            awsCredentialIdentityResolver: identityResolver,
+                            region: currentRegion
+                        )
+                        client = S3Client(config: newConfig)
+                    }
+                }
+            } catch {
+                print("獲取存儲桶位置時出錯：\(error.localizedDescription)")
+            }
+            
+            // 移除開頭和結尾的斜線
+            let fileName = newItemName.trimmingCharacters(in: CharacterSet(charactersIn: "/"))
+            
+            // 構建完整的文件路徑
+            let filePath = currentPrefix + fileName
+            
+            print("正在創建文件：\(filePath)")
+            
+            // 創建一個空文件
+            let input = PutObjectInput(
+                body: .data("".data(using: .utf8)!),
+                bucket: bucket,
+                contentType: "text/plain",
+                key: filePath
+            )
+            
+            _ = try await client.putObject(input: input)
+            print("文件創建成功")
+            
+            // 刷新列表
+            await listObjects(bucket: bucket, prefix: currentPrefix)
+            
+            // 清空文件名稱並更新狀態
+            DispatchQueue.main.async {
+                self.newItemName = ""
+                self.isCreatingItem = false
+                self.createItemError = nil
+                self.isShowingCreateDialog = false
+            }
+            
+        } catch let error as AWSServiceError {
+            let errorMessage = """
+            創建文件失敗（AWS 服務錯誤）：
+            錯誤信息：\(error.message ?? "未知錯誤")
+            錯誤類型：\(type(of: error))
+            當前區域：\(region)
+            當前路徑：\(currentPrefix)
+            文件名稱：\(newItemName)
+            """
+            print(errorMessage)
+            DispatchQueue.main.async {
+                self.createItemError = errorMessage
+                self.isCreatingItem = false
+            }
+        } catch {
+            let errorMessage = """
+            創建文件失敗（一般錯誤）：
+            錯誤信息：\(error.localizedDescription)
+            錯誤類型：\(type(of: error))
+            當前區域：\(region)
+            當前路徑：\(currentPrefix)
+            文件名稱：\(newItemName)
+            """
+            print(errorMessage)
+            DispatchQueue.main.async {
+                self.createItemError = errorMessage
+                self.isCreatingItem = false
+            }
         }
     }
 }
