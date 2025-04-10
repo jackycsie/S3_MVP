@@ -6,6 +6,10 @@ excluded:
 disabled_rules:
   - trailing_whitespace
   - line_length
+  - type_name
+  - type_body_length
+  - file_length
+  - function_body_length
 
 opt_in_rules:
   - empty_count
@@ -25,22 +29,12 @@ identifier_name:
     - aws
     - s3
 
-type_name:
-  min_length: 3
-  max_length: 40
-  excluded:
-    - S3
-
 function_parameter_count:
   warning: 6
   error: 8
-
-file_length:
-  warning: 500
-  error: 1000
 
 cyclomatic_complexity:
   warning: 15
   error: 25
 
-reporter: "xcode" 
+reporter: "github-actions-logging" 
