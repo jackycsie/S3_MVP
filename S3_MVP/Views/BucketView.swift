@@ -20,18 +20,22 @@ struct BucketView: View {
     @State private var isCreatingBucket = false
     @State private var createBucketError: String?
     
-    var body: some View {
-        List(selection: Binding(
-            get: { currentBucket },
+    private var bucketSelection: Binding<String> {
+        Binding<String>(
+            get: { self.currentBucket ?? "" },
             set: { newValue in
-                if let bucket = newValue {
-                    onBucketSelect(bucket)
+                if !newValue.isEmpty {
+                    self.onBucketSelect(newValue)
                 }
             }
-        )) {
+        )
+    }
+    
+    var body: some View {
+        List(selection: bucketSelection) {
             ForEach(buckets) { bucket in
-                Text(bucket.name)
-                    .tag(bucket.name)
+                Text(bucket.name ?? "")
+                    .tag(bucket.name ?? "")
             }
         }
         .overlay {

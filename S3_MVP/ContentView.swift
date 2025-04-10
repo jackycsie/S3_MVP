@@ -215,47 +215,12 @@ struct MainView: View {
     @State private var isCreatingItem = false
     @State private var createItemError: String?
     @State private var selectedItemType = "folder" // "folder" 或 "file"
+    @State private var isShowingSyncSheet = false
     
     var body: some View {
         NavigationView {
-            // 左側邊欄（存儲桶列表）
-            VStack {
-                List(buckets) { bucket in
-                    Text(bucket.name ?? "")
-                        .tag(bucket.name)
-                        .onTapGesture {
-                            if let name = bucket.name {
-                                selectBucket(name)
-                            }
-                        }
-                }
-                .frame(minWidth: 200, maxWidth: 300)
-            }
-            .navigationTitle("存儲桶")
-            .toolbar {
-                ToolbarItem {
-                    Button(action: { isShowingCreateBucketSheet = true }) {
-                        Label("新增存儲桶", systemImage: "plus")
-                    }
-                }
-                
-                ToolbarItem {
-                    Button(action: {
-                        isLoggedIn = false
-                    }) {
-                        Label("登出", systemImage: "rectangle.portrait.and.arrow.right")
-                    }
-                }
-            }
-            
-            // 右側內容（對象列表）
-            if let selectedBucket = selectedBucket {
-                objectListView()
-                    .navigationTitle(selectedBucket)
-            } else {
-                Text("請選擇一個存儲桶")
-                    .navigationTitle("")
-            }
+            sidebar
+            content
         }
         .frame(minWidth: 800, minHeight: 500)
         .sheet(isPresented: $isShowingCreateBucketSheet) {
@@ -270,10 +235,71 @@ struct MainView: View {
                     }
                 }
             )
+            .frame(width: 400, height: 500)
+        }
+        .sheet(isPresented: $isShowingSyncSheet, onDismiss: {
+            // 當同步設置視圖關閉時的回調
+            print("同步設置視圖已關閉")
+        }) {
+            SyncView(viewModel: SyncViewModel(accessKey: accessKey, secretKey: secretKey, region: region))
+                .frame(width: 600, height: 500)
+                .id(UUID())  // 強制視圖每次都重新創建
         }
         .onAppear {
             Task {
                 await refreshBuckets()
+            }
+        }
+    }
+    
+    private var sidebar: some View {
+        VStack {
+            List(buckets) { bucket in
+                Text(bucket.name ?? "")
+                    .tag(bucket.name)
+                    .onTapGesture {
+                        if let name = bucket.name {
+                            selectBucket(name)
+                        }
+                    }
+            }
+            .frame(minWidth: 200, maxWidth: 300)
+        }
+        .navigationTitle("存儲桶")
+        .toolbar {
+            ToolbarItem {
+                Button(action: { isShowingCreateBucketSheet = true }) {
+                    Label("新增存儲桶", systemImage: "plus")
+                }
+            }
+            
+            ToolbarItem {
+                Button(action: {
+                    isLoggedIn = false
+                }) {
+                    Label("登出", systemImage: "rectangle.portrait.and.arrow.right")
+                }
+            }
+            
+            ToolbarItem {
+                Button(action: {
+                    isShowingSyncSheet = true
+                }) {
+                    Image(systemName: "arrow.triangle.2.circlepath")
+                    Text("同步設置")
+                }
+            }
+        }
+    }
+    
+    private var content: some View {
+        Group {
+            if let selectedBucket = selectedBucket {
+                objectListView()
+                    .navigationTitle(selectedBucket)
+            } else {
+                Text("請選擇一個存儲桶")
+                    .navigationTitle("")
             }
         }
     }
@@ -422,15 +448,19 @@ struct MainView: View {
                     .disabled(currentBucket == nil)
                     
                     Button("刷新") {
-                        Task {
-                            if let current = navigationStack.last {
-                                await listObjects(bucket: current.bucket, prefix: current.prefix)
-                            }
-                        }
+                        refreshCurrentView()
+                    }
+                    .disabled(currentBucket == nil)
+                    
+                    Button(action: {
+                        isShowingSyncSheet = true
+                    }) {
+                        Image(systemName: "arrow.triangle.2.circlepath")
+                        Text("同步設置")
                     }
                 }
-            }
-            .padding()
+        }
+        .padding()
             
             if isLoadingObjects {
                 ProgressView("正在加載...")
@@ -1061,6 +1091,8 @@ struct MainView: View {
         isCreatingBucket = true
         
         do {
+            print("開始創建存儲桶: \(name) 在區域: \(region)")
+            
             let credentials = AWSCredentialIdentity(
                 accessKey: accessKey,
                 secret: secretKey
@@ -1075,12 +1107,26 @@ struct MainView: View {
             
             let client = S3Client(config: s3Configuration)
             
+            // 為非美國東部區域創建正確的配置
+            let createBucketConfiguration: S3ClientTypes.CreateBucketConfiguration?
+            if region != "us-east-1" {
+                createBucketConfiguration = S3ClientTypes.CreateBucketConfiguration(
+                    locationConstraint: S3ClientTypes.BucketLocationConstraint(rawValue: region)
+                )
+                print("為非美國東部區域創建配置: \(region)")
+            } else {
+                createBucketConfiguration = nil
+                print("使用美國東部區域默認配置")
+            }
+            
             let input = CreateBucketInput(
                 bucket: name,
-                createBucketConfiguration: region == "us-east-1" ? nil : .init(locationConstraint: .init(rawValue: region))
+                createBucketConfiguration: createBucketConfiguration
             )
             
+            print("發送創建存儲桶請求: \(name)")
             _ = try await client.createBucket(input: input)
+            print("存儲桶創建成功: \(name)")
             
             // 重新獲取存儲桶列表
             await listBuckets()
@@ -1091,6 +1137,7 @@ struct MainView: View {
                 self.newBucketName = ""
             }
         } catch let error as AWSServiceError {
+            print("AWS服務錯誤: \(error.message ?? "未知"), 類型: \(type(of: error))")
             DispatchQueue.main.async {
                 self.errorMessage = """
                 創建存儲桶失敗：
@@ -1108,10 +1155,13 @@ struct MainView: View {
                 2. 名稱符合 S3 命名規則
                 3. IAM 用戶具有創建存儲桶的權限
                 4. 選擇了正確的區域
+                
+                錯誤詳情: \(type(of: error))
                 """
                 self.isCreatingBucket = false
             }
         } catch {
+            print("一般錯誤: \(error.localizedDescription), 類型: \(type(of: error))")
             DispatchQueue.main.async {
                 self.errorMessage = """
                 創建存儲桶失敗：
@@ -1119,6 +1169,8 @@ struct MainView: View {
                 
                 請檢查網絡連接和權限設置。
                 當前區域：\(region)
+                
+                錯誤詳情: \(type(of: error))
                 """
                 self.isCreatingBucket = false
             }
@@ -1409,6 +1461,14 @@ struct MainView: View {
             }
         }
     }
+    
+    private func refreshCurrentView() {
+        Task {
+            if let current = navigationStack.last {
+                await listObjects(bucket: current.bucket, prefix: current.prefix)
+            }
+        }
+    }
 }
 
 // 創建存儲桶的視圖
@@ -1419,85 +1479,155 @@ struct CreateBucketView: View {
     @Binding var isCreating: Bool
     let onCreate: (String) -> Void
     
+    @State private var isNameValid: Bool = true
+    @State private var validationMessage: String = ""
+    
+    private func validateBucketName() {
+        // 清除之前的驗證結果
+        validationMessage = ""
+        isNameValid = true
+        
+        // 檢查為空
+        if bucketName.isEmpty {
+            validationMessage = "存儲桶名稱不能為空"
+            isNameValid = false
+            return
+        }
+        
+        // 檢查長度 (3-63字符)
+        if bucketName.count < 3 || bucketName.count > 63 {
+            validationMessage = "存儲桶名稱必須在3到63個字符之間"
+            isNameValid = false
+            return
+        }
+        
+        // 檢查只包含小寫字母、數字、連字符和點
+        let regex = try! NSRegularExpression(pattern: "^[a-z0-9][a-z0-9.-]*[a-z0-9]$", options: [])
+        let range = NSRange(location: 0, length: bucketName.utf16.count)
+        if regex.firstMatch(in: bucketName, options: [], range: range) == nil {
+            validationMessage = "存儲桶名稱只能包含小寫字母、數字、連字符和點，且必須以字母或數字開頭和結尾"
+            isNameValid = false
+            return
+        }
+        
+        // 檢查是否有連續的點或開頭結尾是否是連字符
+        if bucketName.contains("..") || bucketName.hasPrefix("-") || bucketName.hasSuffix("-") {
+            validationMessage = "存儲桶名稱不能包含連續的點，也不能以連字符開頭或結尾"
+            isNameValid = false
+            return
+        }
+        
+        // 檢查是否看起來像 IP 地址
+        let ipRegex = try! NSRegularExpression(pattern: "^\\d+\\.\\d+\\.\\d+\\.\\d+$", options: [])
+        if ipRegex.firstMatch(in: bucketName, options: [], range: range) != nil {
+            validationMessage = "存儲桶名稱不能是 IP 地址格式"
+            isNameValid = false
+            return
+        }
+    }
+    
     var body: some View {
-        NavigationView {
-            Form {
-                Section {
-                    VStack(alignment: .leading, spacing: 12) {
-                        TextField("請輸入存儲桶名稱", text: $bucketName)
-                            .textFieldStyle(RoundedBorderTextFieldStyle())
-                            .frame(height: 36)
-                            .disabled(isCreating)
-                        
-                        Picker("區域", selection: $region) {
-                            Text("美國東部 (us-east-1)").tag("us-east-1")
-                            Text("東京 (ap-northeast-1)").tag("ap-northeast-1")
-                            Text("新加坡 (ap-southeast-1)").tag("ap-southeast-1")
-                            Text("美國西部 (us-west-2)").tag("us-west-2")
-                        }
-                        .pickerStyle(MenuPickerStyle())
-                        .disabled(isCreating)
-                    }
-                    .padding(.vertical, 12)
-                }
-                .padding(.horizontal, 4)
+        VStack(spacing: 16) {
+            Text("創建新存儲桶")
+                .font(.headline)
+                .padding(.top, 20)
+            
+            VStack(alignment: .leading, spacing: 12) {
+                Text("請輸入存儲桶名稱")
+                    .font(.subheadline)
                 
-                Section(header: Text("注意事項").font(.headline)) {
-                    VStack(alignment: .leading, spacing: 16) {
-                        NoticeRow(icon: "exclamationmark.circle.fill", text: "存儲桶名稱必須是全局唯一的")
-                        NoticeRow(icon: "textformat.abc", text: "名稱只能包含小寫字母、數字和連字符")
-                        NoticeRow(icon: "character.cursor.ibeam", text: "長度必須在 3-63 個字符之間")
-                        NoticeRow(icon: "minus", text: "不能以連字符開頭或結尾")
-                    }
-                    .padding(.vertical, 12)
-                }
-                .padding(.horizontal, 4)
-                
-                // 底部按鈕
-                HStack(spacing: 16) {
-                    Spacer()
-                    
-                    Button(action: {
-                        isPresented = false
-                    }) {
-                        HStack {
-                            Image(systemName: "xmark.circle.fill")
-                            Text("離開視窗")
-                        }
-                    }
-                    .keyboardShortcut(.escape, modifiers: [])
+                TextField("存儲桶名稱", text: $bucketName)
+                    .textFieldStyle(RoundedBorderTextFieldStyle())
                     .disabled(isCreating)
-                    .buttonStyle(.borderless)
-                    .foregroundColor(.gray)
-                    
-                    Button("取消") {
-                        bucketName = ""
+                    .onChange(of: bucketName) { _ in
+                        validateBucketName()
                     }
-                    .disabled(isCreating || bucketName.isEmpty)
-                    .buttonStyle(.borderless)
-                    .foregroundColor(.gray)
-                    
-                    Button(action: {
-                        onCreate(bucketName)
-                    }) {
-                        if isCreating {
-                            ProgressView()
-                                .progressViewStyle(CircularProgressViewStyle())
-                                .frame(width: 80)
-                        } else {
-                            Text("創建")
-                                .frame(width: 80)
-                        }
-                    }
-                    .keyboardShortcut(.return, modifiers: [])
-                    .disabled(bucketName.isEmpty || isCreating)
-                    .buttonStyle(.borderedProminent)
+                
+                if !isNameValid {
+                    Text(validationMessage)
+                        .foregroundColor(.red)
+                        .font(.caption)
                 }
             }
-            .navigationTitle("新增存儲桶")
-            .frame(minWidth: 600, minHeight: 500)
+            .padding(.horizontal)
+            
+            VStack(alignment: .leading, spacing: 12) {
+                Text("選擇區域")
+                    .font(.subheadline)
+                
+                Picker("區域", selection: $region) {
+                    Text("美國東部 (us-east-1)").tag("us-east-1")
+                    Text("東京 (ap-northeast-1)").tag("ap-northeast-1")
+                    Text("新加坡 (ap-southeast-1)").tag("ap-southeast-1")
+                    Text("美國西部 (us-west-2)").tag("us-west-2")
+                }
+                .pickerStyle(MenuPickerStyle())
+                .disabled(isCreating)
+            }
+            .padding(.horizontal)
+            
+            Divider()
+            
+            VStack(alignment: .leading, spacing: 8) {
+                Text("注意事項")
+                    .font(.headline)
+                    .padding(.bottom, 4)
+                
+                Group {
+                    HStack {
+                        Image(systemName: "exclamationmark.circle")
+                        Text("存儲桶名稱必須是全局唯一的")
+                    }
+                    
+                    HStack {
+                        Image(systemName: "textformat.abc")
+                        Text("名稱只能包含小寫字母、數字、連字符和點")
+                    }
+                    
+                    HStack {
+                        Image(systemName: "character.cursor.ibeam")
+                        Text("長度必須在 3-63 個字符之間")
+                    }
+                    
+                    HStack {
+                        Image(systemName: "minus")
+                        Text("不能以連字符開頭或結尾")
+                    }
+                }
+                .font(.caption)
+                .foregroundColor(.secondary)
+            }
+            .padding(.horizontal)
+            
+            Spacer()
+            
+            HStack {
+                Button("取消") {
+                    isPresented = false
+                }
+                .buttonStyle(.bordered)
+                
+                Spacer()
+                
+                Button(action: {
+                    validateBucketName()
+                    if isNameValid {
+                        onCreate(bucketName)
+                    }
+                }) {
+                    if isCreating {
+                        ProgressView()
+                            .progressViewStyle(CircularProgressViewStyle())
+                    } else {
+                        Text("創建存儲桶")
+                    }
+                }
+                .buttonStyle(.borderedProminent)
+                .disabled(!isNameValid || bucketName.isEmpty || isCreating)
+            }
+            .padding()
         }
-        .frame(minWidth: 600, minHeight: 500)
+        .frame(width: 400, height: 500)
     }
 }
 
