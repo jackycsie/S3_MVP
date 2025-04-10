@@ -169,6 +169,11 @@ struct ContentView: View {
             // 嘗試列出儲存桶以驗證憑證
             _ = try await client.listBuckets(input: ListBucketsInput())
             
+            // 更新全局 SyncViewModel 的憑證
+            Task { @MainActor in
+                SyncViewModel.shared.updateCredentials(accessKey: accessKey, secretKey: secretKey, region: region)
+            }
+            
             // 如果成功，設置登入狀態
             DispatchQueue.main.async {
                 isLoggedIn = true
@@ -201,6 +206,7 @@ struct MainView: View {
     @State private var newBucketName = ""
     @State private var isCreatingBucket = false
     @State private var isDeletingBucket = false
+    @State private var showDeleteBucketAlert = false
     @State private var bucketToDelete: String?
     @State private var showDeleteAlert = false
     @State private var selectedObjects: Set<String> = []
@@ -214,8 +220,33 @@ struct MainView: View {
     @State private var newItemName = ""
     @State private var isCreatingItem = false
     @State private var createItemError: String?
+    @State private var isShowingUploadSheet = false
+    @State private var isShowingDeleteObjectAlert = false
+    @State private var objectToDelete: S3Item?
+    @State private var showFolderAlert = false
+    @State private var newFolderName = ""
+    @State private var searchText = ""
     @State private var selectedItemType = "folder" // "folder" 或 "file"
     @State private var isShowingSyncSheet = false
+    
+    // 使用全局 SyncViewModel
+    @ObservedObject private var syncViewModel = SyncViewModel.shared
+    
+    init(accessKey: Binding<String>, secretKey: Binding<String>, region: Binding<String>, isLoggedIn: Binding<Bool>) {
+        self._accessKey = accessKey
+        self._secretKey = secretKey
+        self._region = region
+        self._isLoggedIn = isLoggedIn
+        
+        // 確保 SyncViewModel 使用最新的認證
+        Task { @MainActor in
+            SyncViewModel.shared.updateCredentials(
+                accessKey: accessKey.wrappedValue,
+                secretKey: secretKey.wrappedValue,
+                region: region.wrappedValue
+            )
+        }
+    }
     
     var body: some View {
         NavigationView {
@@ -241,9 +272,8 @@ struct MainView: View {
             // 當同步設置視圖關閉時的回調
             print("同步設置視圖已關閉")
         }) {
-            SyncView(viewModel: SyncViewModel(accessKey: accessKey, secretKey: secretKey, region: region))
+            SyncView(viewModel: syncViewModel)
                 .frame(width: 600, height: 500)
-                .id(UUID())  // 強制視圖每次都重新創建
         }
         .onAppear {
             Task {
