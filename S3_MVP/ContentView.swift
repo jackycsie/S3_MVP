@@ -120,17 +120,6 @@ struct ContentView: View {
                         .textFieldStyle(RoundedBorderTextFieldStyle())
                 }
                 
-                VStack(alignment: .leading, spacing: 8) {
-                    Text("Region")
-                    Picker("選擇區域", selection: $region) {
-                        Text("美國東部 (us-east-1)").tag("us-east-1")
-                        Text("東京 (ap-northeast-1)").tag("ap-northeast-1")
-                        Text("新加坡 (ap-southeast-1)").tag("ap-southeast-1")
-                        Text("美國西部 (us-west-2)").tag("us-west-2")
-                    }
-                    .pickerStyle(MenuPickerStyle())
-                }
-                
                 Button("連接") {
                     Task {
                         await connect()
@@ -481,16 +470,9 @@ struct MainView: View {
                         refreshCurrentView()
                     }
                     .disabled(currentBucket == nil)
-                    
-                    Button(action: {
-                        isShowingSyncSheet = true
-                    }) {
-                        Image(systemName: "arrow.triangle.2.circlepath")
-                        Text("同步設置")
-                    }
                 }
-        }
-        .padding()
+            }
+            .padding()
             
             if isLoadingObjects {
                 ProgressView("正在加載...")
