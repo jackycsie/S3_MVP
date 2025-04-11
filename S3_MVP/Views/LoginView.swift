@@ -1,10 +1,14 @@
 import SwiftUI
+import AWSClientRuntime
+import AWSS3
+import ClientRuntime
+import AWSSDKIdentity
 
 struct LoginView: View {
+    @State private var accessKey = ""
+    @State private var secretKey = ""
+    @State private var region = "us-east-1"
     @Binding var isLoggedIn: Bool
-    @Binding var accessKey: String
-    @Binding var secretKey: String
-    @Binding var region: String
     
     @State private var isValidating = false
     @State private var errorMessage: String?
@@ -58,80 +62,34 @@ struct LoginView: View {
     
     var body: some View {
         VStack(spacing: 20) {
-            Text("AWS S3 存儲桶列表")
-                .font(.largeTitle)
-                .padding(.bottom, 30)
+            Text("S3_MVP")
+                .font(.title)
+                .padding(.top, 20)
             
             VStack(alignment: .leading, spacing: 8) {
                 Text("Access Key")
-                    .foregroundColor(.secondary)
-                SecureField("請輸入 Access Key", text: $accessKey)
+                SecureField("", text: $accessKey)
                     .textFieldStyle(RoundedBorderTextFieldStyle())
-                    .frame(width: 400)
-                    .onChange(of: accessKey) { _ in
-                        validateIfReady()
-                    }
             }
             
             VStack(alignment: .leading, spacing: 8) {
                 Text("Secret Key")
-                    .foregroundColor(.secondary)
-                SecureField("請輸入 Secret Key", text: $secretKey)
+                SecureField("", text: $secretKey)
                     .textFieldStyle(RoundedBorderTextFieldStyle())
-                    .frame(width: 400)
-                    .onChange(of: secretKey) { _ in
-                        validateIfReady()
-                    }
             }
             
-            VStack(alignment: .leading, spacing: 8) {
-                Text("Region")
-                    .foregroundColor(.secondary)
-                Picker("選擇區域", selection: $region) {
-                    Text("美國東部 (us-east-1)").tag("us-east-1")
-                    Text("東京 (ap-northeast-1)").tag("ap-northeast-1")
-                    Text("新加坡 (ap-southeast-1)").tag("ap-southeast-1")
-                    Text("美國西部 (us-west-2)").tag("us-west-2")
-                }
-                .frame(width: 400)
-                .onChange(of: region) { _ in
-                    validateIfReady()
-                }
-            }
-            
-            // 連接狀態顯示
-            HStack {
-                Image(systemName: connectionStatus.icon)
-                    .foregroundColor(connectionStatus.color)
-                Text(connectionStatus.message)
-                    .foregroundColor(connectionStatus.color)
-                if case .validating = connectionStatus {
-                    ProgressView()
-                        .scaleEffect(0.5)
-                        .padding(.leading, 5)
-                }
-            }
-            .padding()
-            .frame(height: 50)
-            
-            Button(action: {
+            Button("連接") {
                 Task {
-                    await login()
-                }
-            }) {
-                if isValidating {
-                    ProgressView()
-                        .progressViewStyle(CircularProgressViewStyle())
-                        .frame(width: 100)
-                } else {
-                    Text("登入")
-                        .frame(width: 100)
+                    await connect()
                 }
             }
             .buttonStyle(.borderedProminent)
-            .disabled(accessKey.isEmpty || secretKey.isEmpty || isValidating || !isConnectionSuccessful)
+            .padding(.top, 10)
+            
+            Spacer()
         }
         .padding()
+        .frame(width: 300)
     }
     
     private func validateIfReady() {
@@ -170,24 +128,37 @@ struct LoginView: View {
         isValidating = false
     }
     
-    private func login() async {
-        isValidating = true
-        
+    private func connect() async {
         do {
-            let isValid = try await AWSCredentialUtility.validateCredentials(
+            // 创建凭证身份
+            let credentials = AWSCredentialIdentity(
                 accessKey: accessKey,
-                secretKey: secretKey,
+                secret: secretKey
+            )
+            
+            // 创建静态凭证解析器
+            let provider = try StaticAWSCredentialIdentityResolver(credentials)
+            
+            // 设置 S3 配置
+            let config = try await S3Client.S3ClientConfiguration(
+                awsCredentialIdentityResolver: provider,
                 region: region
             )
             
-            if isValid {
-                isLoggedIn = true
-            }
+            // 创建 S3 客户端并尝试列出存储桶以验证凭证
+            let client = S3Client(config: config)
+            _ = try await client.listBuckets(input: ListBucketsInput())
+            
+            // 保存凭证信息
+            UserDefaults.standard.set(accessKey, forKey: "accessKey")
+            UserDefaults.standard.set(secretKey, forKey: "secretKey")
+            UserDefaults.standard.set(region, forKey: "region")
+            
+            isLoggedIn = true
         } catch {
-            connectionStatus = .failed(error.localizedDescription)
+            print("连接失败: \(error)")
+            errorMessage = "连接失败：\(error.localizedDescription)"
         }
-        
-        isValidating = false
     }
     
     private var isConnectionSuccessful: Bool {
