@@ -67,14 +67,14 @@ A native macOS application built with SwiftUI for managing AWS S3 buckets and ob
 
 ## Recent Updates
 
-### Version 1.2.0
+### Version 0.2.0
 - Added batch download functionality for multiple files
 - Implemented folder synchronization system
 - Added synchronization scheduling and history tracking
 - Improved UI with better selection mechanisms
 - Enhanced error handling and user feedback
 
-### Version 1.1.0
+### Version 0.1.0
 - Added folder creation with double-slash format
 - Improved folder navigation
 - Enhanced error handling and user feedback
