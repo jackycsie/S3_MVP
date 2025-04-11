@@ -33,6 +33,13 @@ A native macOS application built with SwiftUI for managing AWS S3 buckets and ob
 
 ## Installation
 
+### Quick Installation
+1. Download the latest version from [Releases](https://github.com/jackycsie/S3_MVP/releases)
+2. Mount the downloaded DMG file
+3. Drag the S3_MVP application to your Applications folder
+4. Launch S3_MVP from your Applications folder
+
+### Build from Source
 1. Clone the repository
 2. Open the project in Xcode
 3. Build and run the application
